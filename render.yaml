@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: university-chat-backend
+    runtime: python
+    region: frankfurt
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: DB_USER
+        value: "username"
+      - key: DB_PASSWORD
+        value: "password"
+      - key: DB_HOST
+        value
