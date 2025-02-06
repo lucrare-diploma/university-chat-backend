@@ -30,7 +30,7 @@ def get_connection():
     except Exception as e:
         return None
 
-# Ruta principală
+# Ruta principală pentru GET
 @app.get("/")
 def root():
     conn = get_connection()
@@ -42,3 +42,8 @@ def root():
         conn.close()
         return {"message": "Welcome to University Chat API!", "time": result}
     return {"error": "Database connection failed"}
+
+# Ruta principală pentru HEAD (fix pentru Render)
+@app.head("/")
+def root_head():
+    return {"message": "HEAD request received"}
