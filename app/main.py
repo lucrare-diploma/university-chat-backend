@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-import psycopg2
-from dotenv import load_dotenv
 import os
 import uvicorn
+import psycopg2
+from dotenv import load_dotenv
 
 # Încarcă variabilele de mediu
 load_dotenv()
@@ -24,14 +24,15 @@ def get_connection():
             user=USER,
             password=PASSWORD,
             host=HOST,
-            port=PORT,
+            port=6543,  # Supabase folosește 6543 pentru baza de date, nu pentru FastAPI!
             dbname=DBNAME
         )
         return connection
     except Exception as e:
+        print(f"❌ Database connection error: {e}")
         return None
 
-# Ruta principală pentru GET
+# Ruta principală pentru verificare
 @app.get("/")
 def root():
     conn = get_connection()
@@ -44,13 +45,7 @@ def root():
         return {"message": "Welcome to University Chat API!", "time": result}
     return {"error": "Database connection failed"}
 
-# Ruta principală pentru HEAD (fix pentru Render)
-@app.head("/")
-def root_head():
-    return {"message": "HEAD request received"}
-
-
+# Rulează serverul Uvicorn cu portul corect
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render folosește variabila de mediu PORT
+    port = int(os.environ.get("PORT", 10000))  # Preia portul din Render
     uvicorn.run(app, host="0.0.0.0", port=port)
-
