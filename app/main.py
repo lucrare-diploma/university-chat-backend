@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import psycopg2
 from dotenv import load_dotenv
 import os
+import uvicorn
 
 # Încarcă variabilele de mediu
 load_dotenv()
@@ -47,3 +48,9 @@ def root():
 @app.head("/")
 def root_head():
     return {"message": "HEAD request received"}
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))  # Render folosește variabila de mediu PORT
+    uvicorn.run(app, host="0.0.0.0", port=port)
+
