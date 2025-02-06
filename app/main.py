@@ -45,6 +45,11 @@ def root():
         return {"message": "Welcome to University Chat API!", "time": result}
     return {"error": "Database connection failed"}
 
+# Ruta principală pentru HEAD (fix pentru Render)
+@app.head("/")
+def root_head():
+    return {"message": "HEAD request received"}
+
 # Rulează serverul Uvicorn cu portul corect
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Preia portul setat de Render
