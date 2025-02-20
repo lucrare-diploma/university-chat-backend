@@ -111,8 +111,8 @@ def delete_user(user_id: str):
     raise HTTPException(status_code=500, detail="Database connection failed")
 
 
-# # Configurăm CryptContext pentru bcrypt
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Configurăm CryptContext pentru bcrypt
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # @router.post("/hash-passwords", summary="Hash passwords for all users (temporary)")
 # def hash_all_passwords():
