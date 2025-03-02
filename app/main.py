@@ -25,7 +25,7 @@ app = FastAPI(
 
 origins = [
     "http://localhost:5173",  # URL-ul frontend-ului local
-    "https://university-chat-backend.onrender.com",  # URL-ul de producție al frontend-ului
+    "https://lucrare-diploma.github.io",  # URL-ul de producție al frontend-ului
 ]
 
 app.add_middleware(
