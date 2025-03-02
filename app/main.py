@@ -9,6 +9,7 @@ from app.dependencies import get_current_user
 # Include router-ele din controller-ele pentru utilizatori și autentificare
 from app.controllers.users_controller import router as users_router
 from app.controllers.auth_controller import router as auth_router
+from fastapi.middleware.cors import CORSMiddleware
 
 # Încarcă variabilele de mediu din .env
 load_dotenv()
@@ -20,6 +21,19 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"
+)
+
+origins = [
+    "http://localhost:5173",  # URL-ul frontend-ului local
+    "https://university-chat-backend.onrender.com",  # URL-ul de producție al frontend-ului
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,    # Permite aceste origini
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(users_router)
