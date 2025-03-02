@@ -1,11 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from app.database import get_connection, release_connection
 from passlib.context import CryptContext
 
+from app.dependencies import get_current_user
+
 router = APIRouter(
     prefix="/users",
-    tags=["users"]
+    tags=["users"],
+    dependencies=[Depends(get_current_user)]
 )
 
 # Modelul pentru cererea de creare a unui utilizator

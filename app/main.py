@@ -1,21 +1,31 @@
 from fastapi import FastAPI, Depends
-from fastapi.responses import FileResponse
+from dotenv import load_dotenv
+import os
+import uvicorn
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+# Importă funcția custom pentru token din dependencies
+from app.dependencies import get_current_user
+# Include router-ele din controller-ele pentru utilizatori și autentificare
 from app.controllers.users_controller import router as users_router
 from app.controllers.auth_controller import router as auth_router
-from app.dependencies import get_current_user  # importă funcția custom
+
+# Încarcă variabilele de mediu din .env
+load_dotenv()
 
 app = FastAPI(
     title="University Chat Backend API",
+    description="API for University Chat application",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
 
-# Include router-ele definite în controller-e
 app.include_router(users_router)
 app.include_router(auth_router)
 
+# Montează fișierele statice
 app.mount("/static", StaticFiles(directory="public"), name="static")
 
 @app.get("/")
@@ -26,7 +36,15 @@ def read_root():
 async def favicon():
     return FileResponse("public/favicon.ico")
 
-# Endpoint protejat - folosește tokenul JWT extras de get_current_user
+# Endpoint protejat: folosește get_current_user pentru a extrage tokenul validat
 @app.get("/protected")
 def protected_route(current_user: dict = Depends(get_current_user)):
     return {"current_user": current_user}
+
+# Importă și setează funcția custom pentru OpenAPI din openapi.py
+from openapi import custom_openapi
+app.openapi = lambda: custom_openapi(app)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)

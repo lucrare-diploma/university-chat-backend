@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from datetime import timedelta, datetime
 import os
@@ -11,13 +11,13 @@ router = APIRouter(
     tags=["auth"]
 )
 
-# Configurarea CryptContext pentru bcrypt
+# Configurare passlib pentru bcrypt
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Setări JWT
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    raise Exception("SECRET_KEY is not set in environment variables!")
+    raise Exception("SECRET_KEY is not set in the environment variables!")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -38,8 +38,8 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-@router.post("/admin/login", response_model=TokenResponse)
-def admin_login(login_req: LoginRequest):
+@router.post("/login", response_model=TokenResponse)
+def login(login_req: LoginRequest):
     conn = get_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
@@ -52,31 +52,18 @@ def admin_login(login_req: LoginRequest):
         if not user:
             raise HTTPException(status_code=401, detail="Invalid email or password")
         user_id, password_hash = user
-
-        # Debug: Asigură-te că password_hash este un hash valid
-        print("DEBUG: password_hash retrieved:", password_hash)
         
         # Verifică parola
         if not pwd_context.verify(login_req.password, password_hash):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        # Verifică dacă utilizatorul este admin
-        cursor.execute("SELECT user_id FROM admins WHERE user_id = %s;", (user_id,))
-        admin = cursor.fetchone()
-        if not admin:
-            raise HTTPException(status_code=403, detail="User is not an admin")
-        
-        # Creează tokenul JWT
-        token_data = {"user_id": user_id, "role": "admin"}
+        # Creează tokenul JWT pentru orice utilizator (rol poate fi extins dacă este nevoie)
+        token_data = {"user_id": user_id, "role": "user"}
         access_token = create_access_token(data=token_data)
         return {"access_token": access_token, "token_type": "bearer"}
-    except HTTPException as http_exc:
-        raise http_exc
     except Exception as e:
         conn.rollback()
-        # Loghează eroarea complet pentru debugging
-        print("DEBUG: Exception during login:", e)
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         release_connection(conn)
