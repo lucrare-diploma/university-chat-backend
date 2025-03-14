@@ -9,6 +9,7 @@ from app.controllers.auth_controller import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 from dependencies.dependencies import get_current_user
 from openapi import custom_openapi
+from schemas.generic_response import GenericResponse
 
 # Încarcă variabilele de mediu din .env
 load_dotenv()
@@ -45,7 +46,7 @@ app.mount("/static", StaticFiles(directory="public"), name="static")
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to University Chat Backend API!"}
+    return GenericResponse(success=True, code=200, response="Welcome to University Chat Backend API!")
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -54,7 +55,7 @@ async def favicon():
 # Endpoint protejat: folosește get_current_user pentru a extrage tokenul validat
 @app.get("/current_user")
 def protected_route(current_user: dict = Depends(get_current_user)):
-    return {"current_user": current_user}
+    return GenericResponse(success=True, code=200, response={"current_user": current_user})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
