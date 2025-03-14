@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, EmailStr
 from datetime import timedelta, datetime
 import os
 import jwt
 from passlib.context import CryptContext
-from app.database import get_connection, release_connection
+
+from database.database import get_connection, release_connection
+from schemas.generic_response import GenericResponse
+from schemas.login import LoginRequest
 
 router = APIRouter(
     prefix="/auth",
@@ -21,16 +23,6 @@ if not SECRET_KEY:
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Schema pentru cererea de autentificare
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-# Schema pentru răspunsul cu token
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
@@ -38,11 +30,11 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=GenericResponse)
 def login(login_req: LoginRequest):
     conn = get_connection()
     if not conn:
-        raise HTTPException(status_code=500, detail="Database connection failed")
+        raise GenericResponse(success=False, code=500, response=conn, detail="Invalid email or password")
     
     cursor = conn.cursor()
     try:
@@ -50,17 +42,17 @@ def login(login_req: LoginRequest):
         cursor.execute("SELECT id, password_hash FROM users WHERE email = %s;", (login_req.email,))
         user = cursor.fetchone()
         if not user:
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            return GenericResponse(success=False, code=401, response=user, detail="Invalid email or password")
         user_id, password_hash = user
         
         # Verifică parola
         if not pwd_context.verify(login_req.password, password_hash):
-            raise HTTPException(status_code=401, detail="Invalid email or password")
+            return GenericResponse(success=False, code=401, detail="Invalid email or password")
         
-        # Creează tokenul JWT pentru orice utilizator (rol poate fi extins dacă este nevoie)
+        # Creează tokenul JWT pentru orice utilizator
         token_data = {"user_id": user_id, "role": "user"}
         access_token = create_access_token(data=token_data)
-        return {"access_token": access_token, "token_type": "bearer"}
+        return GenericResponse(success=True, code=200, response={"access_token": access_token, "token_type": "bearer"})
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))

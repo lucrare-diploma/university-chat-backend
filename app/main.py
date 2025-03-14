@@ -4,12 +4,11 @@ import os
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-# Importă funcția custom pentru token din dependencies
-from app.dependencies import get_current_user
-# Include router-ele din controller-ele pentru utilizatori și autentificare
-from app.controllers.users_controller import router as users_router
+from app.controllers.user_controller import router as user_router
 from app.controllers.auth_controller import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
+from dependencies.dependencies import get_current_user
+from openapi import custom_openapi
 
 # Încarcă variabilele de mediu din .env
 load_dotenv()
@@ -36,8 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users_router)
+app.include_router(user_router)
 app.include_router(auth_router)
+
+app.openapi = lambda: custom_openapi(app)
 
 # Montează fișierele statice
 app.mount("/static", StaticFiles(directory="public"), name="static")
@@ -51,13 +52,9 @@ async def favicon():
     return FileResponse("public/favicon.ico")
 
 # Endpoint protejat: folosește get_current_user pentru a extrage tokenul validat
-@app.get("/protected")
+@app.get("/current_user")
 def protected_route(current_user: dict = Depends(get_current_user)):
     return {"current_user": current_user}
-
-# Importă și setează funcția custom pentru OpenAPI din openapi.py
-from openapi import custom_openapi
-app.openapi = lambda: custom_openapi(app)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
